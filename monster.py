@@ -138,7 +138,7 @@ class BaseMonster:
         if now - self.last_attack_time < cooldown:
             return False
         dist = math.sqrt((player.x - self.x) ** 2 + (player.y - self.y) ** 2)
-        if dist < self.size + PLAYER_SIZE // 2:
+        if dist < self.size // 2 + PLAYER_SIZE // 2:
             self.last_attack_time = now
             player.take_damage(self.get_attack_damage())
             return True

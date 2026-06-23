@@ -105,7 +105,7 @@ class Player:
             if not monster.alive:
                 continue
             dist = math.sqrt((monster.x - attack_cx) ** 2 + (monster.y - attack_cy) ** 2)
-            if dist < ATTACK_RANGE:
+            if dist < ATTACK_RANGE + monster.size // 2:
                 damage = max(1, self.atk - monster.df)
                 monster.take_damage(damage)
                 hits.append((monster, damage))
