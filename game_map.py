@@ -45,6 +45,10 @@ class GameMap:
         self.visible = [[False for _ in range(height)] for _ in range(width)]
         self.stairs_pos = None
         self.shop_room = None
+        self.boss_room = None
+        self.is_boss_floor = False
+        self.stairs_active = True
+        self.boss_spawn_pos = None
 
     def is_wall(self, x, y):
         if x < 0 or x >= self.width or y < 0 or y >= self.height:
@@ -57,7 +61,7 @@ class GameMap:
     def is_walkable(self, x, y):
         if x < 0 or x >= self.width or y < 0 or y >= self.height:
             return False
-        return self.tiles[x][y] in [0, 2, 3]
+        return self.tiles[x][y] in [0, 2, 3, 5]
 
     def create_room(self, room):
         for x in range(room.left, room.right):
@@ -114,6 +118,10 @@ class GameMap:
         self.visible = [[False for _ in range(self.height)] for _ in range(self.width)]
         self.stairs_pos = None
         self.shop_room = None
+        self.boss_room = None
+        self.is_boss_floor = (floor % 3 == 0)
+        self.stairs_active = not self.is_boss_floor
+        self.boss_spawn_pos = None
 
         num_rooms = 0
         attempts = 0
@@ -148,16 +156,29 @@ class GameMap:
         self.place_doors()
 
         if len(self.rooms) >= 2:
-            shop_idx = random.randint(1, max(1, len(self.rooms) - 1))
-            self.shop_room = self.rooms[shop_idx]
-            for x in range(self.shop_room.left, self.shop_room.right):
-                for y in range(self.shop_room.top, self.shop_room.bottom):
-                    if 0 <= x < self.width and 0 <= y < self.height and self.tiles[x][y] == 0:
-                        self.tiles[x][y] = 3
+            max_shop_idx = len(self.rooms) - 2 if self.is_boss_floor else len(self.rooms) - 1
+            if max_shop_idx >= 1:
+                shop_idx = random.randint(1, max_shop_idx)
+                self.shop_room = self.rooms[shop_idx]
+                for x in range(self.shop_room.left, self.shop_room.right):
+                    for y in range(self.shop_room.top, self.shop_room.bottom):
+                        if 0 <= x < self.width and 0 <= y < self.height and self.tiles[x][y] == 0:
+                            self.tiles[x][y] = 3
 
         if len(self.rooms) > 0:
-            last_room = self.rooms[-1]
-            sx, sy = last_room.center
+            if self.is_boss_floor and len(self.rooms) >= 2:
+                self.boss_room = self.rooms[-1]
+                for x in range(self.boss_room.left, self.boss_room.right):
+                    for y in range(self.boss_room.top, self.boss_room.bottom):
+                        if 0 <= x < self.width and 0 <= y < self.height and self.tiles[x][y] == 0:
+                            self.tiles[x][y] = 5
+                bx, by = self.boss_room.center
+                self.boss_spawn_pos = (bx, by)
+                stairs_room = self.boss_room
+            else:
+                stairs_room = self.rooms[-1]
+
+            sx, sy = stairs_room.center
             if 0 <= sx < self.width and 0 <= sy < self.height:
                 self.tiles[sx][sy] = 4
                 self.stairs_pos = (sx, sy)
@@ -169,7 +190,7 @@ class GameMap:
         while attempts < 50:
             x = random.randint(room.left + 1, room.right - 2)
             y = random.randint(room.top + 1, room.bottom - 2)
-            if 0 <= x < self.width and 0 <= y < self.height and self.tiles[x][y] in [0, 3]:
+            if 0 <= x < self.width and 0 <= y < self.height and self.tiles[x][y] in [0, 3, 5]:
                 return (x, y)
             attempts += 1
         return room.center

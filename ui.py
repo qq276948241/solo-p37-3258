@@ -78,6 +78,8 @@ def draw_minimap(screen, game_map, player, monsters, stairs_pos):
                 color = PURPLE
             elif tile == 4:
                 color = STAIRS_COLOR
+            elif tile == 5:
+                color = BOSS_FLOOR_COLOR
             else:
                 color = FLOOR_COLOR
             if game_map.visible[x][y]:
@@ -95,8 +97,14 @@ def draw_minimap(screen, game_map, player, monsters, stairs_pos):
         my = int(m.tile_y * scale_y)
         if 0 <= mx < MINIMAP_SIZE and 0 <= my < MINIMAP_SIZE:
             if game_map.visible[m.tile_x][m.tile_y]:
-                pygame.draw.circle(screen, RED,
-                                   (mm_x + mx, mm_y + my), 2)
+                if hasattr(m, 'is_boss') and m.is_boss:
+                    pygame.draw.circle(screen, BOSS_COLOR,
+                                       (mm_x + mx, mm_y + my), 5)
+                    pygame.draw.circle(screen, YELLOW,
+                                       (mm_x + mx, mm_y + my), 5, 1)
+                else:
+                    pygame.draw.circle(screen, RED,
+                                       (mm_x + mx, mm_y + my), 2)
 
     if stairs_pos:
         sx = int(stairs_pos[0] * scale_x)

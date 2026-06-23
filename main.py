@@ -5,7 +5,7 @@ import math
 from constants import *
 from game_map import GameMap
 from player import Player
-from monster import Monster
+from monster import Monster, Boss
 from items import Item, check_item_pickup
 from shop import Shop
 from ui import draw_ui, draw_minimap, draw_floor_notice
@@ -46,6 +46,8 @@ class Game:
                 continue
             if room is self.game_map.shop_room:
                 continue
+            if room is self.game_map.boss_room:
+                continue
             num_monsters = random.randint(1, 3 + self.floor // 2)
             for _ in range(num_monsters):
                 mx, my = self.game_map.get_random_floor_tile(room)
@@ -53,6 +55,10 @@ class Game:
                 if self.floor >= 3:
                     monster_type = random.choice(['slime', 'skeleton', 'skeleton'])
                 self.monsters.append(Monster(mx, my, monster_type))
+
+        if self.game_map.is_boss_floor and self.game_map.boss_spawn_pos:
+            bx, by = self.game_map.boss_spawn_pos
+            self.monsters.append(Boss(bx, by, self.floor))
 
     def next_floor(self):
         self.floor += 1
@@ -102,6 +108,7 @@ class Game:
                             self.shop.active = True
                     elif event.key == pygame.K_PERIOD:
                         if (self.game_map.stairs_pos and
+                                self.game_map.stairs_active and
                                 self.player.tile_x == self.game_map.stairs_pos[0] and
                                 self.player.tile_y == self.game_map.stairs_pos[1]):
                             self.next_floor()
@@ -166,9 +173,29 @@ class Game:
         for monster in self.monsters:
             if not monster.alive and not hasattr(monster, '_dropped'):
                 monster._dropped = True
-                drops = Item.create_drops(monster.tile_x, monster.tile_y, monster)
-                self.items.extend(drops)
+                if hasattr(monster, 'is_boss') and monster.is_boss:
+                    gold = monster.get_gold_drop()
+                    self.items.append(Item(monster.tile_x, monster.tile_y,
+                                            'coin', gold))
+                    num_potions = monster.get_potion_drops()
+                    for i in range(num_potions):
+                        ox = monster.tile_x + random.randint(-2, 2)
+                        oy = monster.tile_y + random.randint(-2, 2)
+                        self.items.append(Item(ox, oy, 'potion'))
+                    if random.random() < 0.5:
+                        ox = monster.tile_x + random.randint(-1, 1)
+                        oy = monster.tile_y + random.randint(-1, 1)
+                        self.items.append(Item(ox, oy, 'arrow_pickup',
+                                                random.randint(5, 10)))
+                else:
+                    drops = Item.create_drops(monster.tile_x, monster.tile_y, monster)
+                    self.items.extend(drops)
         self.monsters = [m for m in self.monsters if m.alive]
+
+        if self.game_map.is_boss_floor and not self.game_map.stairs_active:
+            boss_alive = any(hasattr(m, 'is_boss') and m.is_boss for m in self.monsters)
+            if not boss_alive:
+                self.game_map.stairs_active = True
 
         for item in self.items:
             item.update()
@@ -210,6 +237,8 @@ class Game:
                     color = SHOP_FLOOR_COLOR
                 elif tile == 4:
                     color = FLOOR_COLOR
+                elif tile == 5:
+                    color = BOSS_FLOOR_COLOR
                 else:
                     color = FLOOR_COLOR
 
@@ -282,7 +311,10 @@ class Game:
             sx, sy = self.game_map.stairs_pos
             if (abs(self.player.tile_x - sx) <= 1 and
                     abs(self.player.tile_y - sy) <= 1):
-                hint = self.font.render('按 . 下一层', True, YELLOW)
+                if self.game_map.stairs_active:
+                    hint = self.font.render('按 . 下一层', True, YELLOW)
+                else:
+                    hint = self.font.render('击败BOSS后楼梯激活', True, RED)
                 px = self.player.x - camera_x
                 py = self.player.y - camera_y + UI_HEIGHT
                 self.screen.blit(hint,
