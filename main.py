@@ -5,8 +5,8 @@ import math
 from constants import *
 from game_map import GameMap
 from player import Player
-from monster import Monster, Boss
-from items import Item, check_item_pickup
+from monster import BaseMonster, Slime, Skeleton, Boss
+from items import Item, create_drops, check_item_pickup
 from shop import Shop
 from ui import draw_ui, draw_minimap, draw_floor_notice
 from game_over import GameOverScreen
@@ -51,10 +51,11 @@ class Game:
             num_monsters = random.randint(1, 3 + self.floor // 2)
             for _ in range(num_monsters):
                 mx, my = self.game_map.get_random_floor_tile(room)
-                monster_type = random.choice(['slime', 'slime', 'skeleton'])
                 if self.floor >= 3:
-                    monster_type = random.choice(['slime', 'skeleton', 'skeleton'])
-                self.monsters.append(Monster(mx, my, monster_type))
+                    cls = random.choice([Slime, Skeleton, Skeleton])
+                else:
+                    cls = random.choice([Slime, Slime, Skeleton])
+                self.monsters.append(cls(mx, my, self.floor))
 
         if self.game_map.is_boss_floor and self.game_map.boss_spawn_pos:
             bx, by = self.game_map.boss_spawn_pos
@@ -163,8 +164,7 @@ class Game:
                     })
                     if not monster.alive:
                         self.player.total_kills += 1
-                        drops = Item.create_drops(monster.tile_x,
-                                                   monster.tile_y, monster)
+                        drops = create_drops(monster)
                         self.items.extend(drops)
                     break
 
@@ -173,27 +173,12 @@ class Game:
         for monster in self.monsters:
             if not monster.alive and not hasattr(monster, '_dropped'):
                 monster._dropped = True
-                if hasattr(monster, 'is_boss') and monster.is_boss:
-                    gold = monster.get_gold_drop()
-                    self.items.append(Item(monster.tile_x, monster.tile_y,
-                                            'coin', gold))
-                    num_potions = monster.get_potion_drops()
-                    for i in range(num_potions):
-                        ox = monster.tile_x + random.randint(-2, 2)
-                        oy = monster.tile_y + random.randint(-2, 2)
-                        self.items.append(Item(ox, oy, 'potion'))
-                    if random.random() < 0.5:
-                        ox = monster.tile_x + random.randint(-1, 1)
-                        oy = monster.tile_y + random.randint(-1, 1)
-                        self.items.append(Item(ox, oy, 'arrow_pickup',
-                                                random.randint(5, 10)))
-                else:
-                    drops = Item.create_drops(monster.tile_x, monster.tile_y, monster)
-                    self.items.extend(drops)
+                drops = create_drops(monster)
+                self.items.extend(drops)
         self.monsters = [m for m in self.monsters if m.alive]
 
         if self.game_map.is_boss_floor and not self.game_map.stairs_active:
-            boss_alive = any(hasattr(m, 'is_boss') and m.is_boss for m in self.monsters)
+            boss_alive = any(m.is_boss for m in self.monsters)
             if not boss_alive:
                 self.game_map.stairs_active = True
 

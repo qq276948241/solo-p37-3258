@@ -59,23 +59,77 @@ PLAYER_MAX_HP = 100
 PLAYER_BASE_ATK = 10
 PLAYER_BASE_DEF = 0
 
-SLIME_HP = 30
-SLIME_ATK = 5
-SLIME_EXP = 10
-SLIME_GOLD_MIN = 2
-SLIME_GOLD_MAX = 6
-
-SKELETON_HP = 50
-SKELETON_ATK = 8
-SKELETON_EXP = 20
-SKELETON_GOLD_MIN = 5
-SKELETON_GOLD_MAX = 12
-
-BOSS_HP_BASE = 300
-BOSS_ATK_BASE = 18
-BOSS_GOLD_MIN = 50
-BOSS_GOLD_MAX = 100
-BOSS_SIZE_MULTIPLIER = 2
+MONSTER_CONFIGS = {
+    'slime': {
+        'hp': 30,
+        'atk': 5,
+        'df': 0,
+        'speed': MONSTER_SPEED * 0.8,
+        'size': 20,
+        'color': SLIME_COLOR,
+        'outline_color': DARK_GREEN,
+        'gold_min': 2,
+        'gold_max': 6,
+        'potion_drop_chance': 0.3,
+        'arrow_drop_chance': 0.2,
+        'bow_drop_chance': 0.05,
+        'aggro_range': 6,
+        'attack_cooldown': 800,
+        'patrol_speed_mult': 0.5,
+        'bar_width_offset': 4,
+        'bar_height': 4,
+        'is_boss': False,
+    },
+    'skeleton': {
+        'hp': 50,
+        'atk': 8,
+        'df': 1,
+        'speed': MONSTER_SPEED,
+        'size': 22,
+        'color': SKELETON_COLOR,
+        'outline_color': DARK_GRAY,
+        'gold_min': 5,
+        'gold_max': 12,
+        'potion_drop_chance': 0.3,
+        'arrow_drop_chance': 0.2,
+        'bow_drop_chance': 0.05,
+        'aggro_range': 6,
+        'attack_cooldown': 800,
+        'patrol_speed_mult': 0.5,
+        'bar_width_offset': 4,
+        'bar_height': 4,
+        'is_boss': False,
+    },
+    'boss': {
+        'hp': 300,
+        'atk': 18,
+        'df': 3,
+        'speed': MONSTER_SPEED * 0.7,
+        'size': 44,
+        'color': BOSS_COLOR,
+        'outline_color': YELLOW,
+        'gold_min': 50,
+        'gold_max': 100,
+        'potion_drop_count': 2,
+        'arrow_drop_chance': 0.5,
+        'arrow_drop_amount': 7,
+        'bow_drop_chance': 0.0,
+        'aggro_range': 10,
+        'attack_cooldown': 800,
+        'charge_speed_mult': 2.5,
+        'charge_attack_mult': 1.5,
+        'charge_trigger_chance': 0.005,
+        'charge_duration': 60,
+        'charge_cooldown_override': 500,
+        'bar_width_offset': 20,
+        'bar_height': 8,
+        'hp_per_floor': 80,
+        'atk_per_floor': 5,
+        'df_per_floor': 0.33,
+        'gold_per_floor': 10,
+        'is_boss': True,
+    },
+}
 
 ATTACK_RANGE = 40
 ARROW_SPEED = 8

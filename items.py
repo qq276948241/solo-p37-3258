@@ -50,23 +50,36 @@ class Item:
             pygame.draw.line(screen, LIGHT_GRAY,
                              (sx - 8, sy - 7), (sx - 8, sy + 7), 1)
 
-    @staticmethod
-    def create_drops(x, y, monster):
-        drops = []
-        gold_amount = monster.get_gold_drop()
-        drops.append(Item(x, y, 'coin', gold_amount))
-        roll = random.random()
-        if roll < 0.3:
-            drops.append(Item(x + random.randint(-1, 1),
-                              y + random.randint(-1, 1), 'potion'))
-        elif roll < 0.5 and not any(d.type == 'arrow_pickup' for d in drops):
-            drops.append(Item(x + random.randint(-1, 1),
-                              y + random.randint(-1, 1),
+
+def create_drops(monster):
+    drops = []
+    tx, ty = monster.tile_x, monster.tile_y
+
+    gold = monster.get_gold_drop()
+    drops.append(Item(tx, ty, 'coin', gold))
+
+    if monster.is_boss:
+        potion_count = monster.get_potion_drops()
+        for _ in range(potion_count):
+            ox = tx + random.randint(-2, 2)
+            oy = ty + random.randint(-2, 2)
+            drops.append(Item(ox, oy, 'potion'))
+        if random.random() < monster._arrow_drop_chance:
+            drops.append(Item(tx + random.randint(-1, 1),
+                              ty + random.randint(-1, 1),
+                              'arrow_pickup', monster.get_arrow_drops()))
+    else:
+        if random.random() < monster._potion_drop_chance:
+            drops.append(Item(tx + random.randint(-1, 1),
+                              ty + random.randint(-1, 1), 'potion'))
+        if random.random() < monster._arrow_drop_chance:
+            drops.append(Item(tx + random.randint(-1, 1),
+                              ty + random.randint(-1, 1),
                               'arrow_pickup', random.randint(2, 5)))
-        if random.random() < 0.05:
-            drops.append(Item(x + random.randint(-1, 1),
-                              y + random.randint(-1, 1), 'bow'))
-        return drops
+        if random.random() < monster._bow_drop_chance:
+            drops.append(Item(tx + random.randint(-1, 1),
+                              ty + random.randint(-1, 1), 'bow'))
+    return drops
 
 
 def check_item_pickup(player, items):
